@@ -1,95 +1,57 @@
 return {
+  -- Simple chat implementation that works with Copilot
   {
-    "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "main",
-    dependencies = {
-      { "github/copilot.vim" }, -- or zbirenbaum/copilot.lua
-      { "nvim-lua/plenary.nvim" }, -- for curl, log wrapper
-    },
-    build = "make tiktoken", -- Only on MacOS or Linux
-    opts = {
-      -- See Configuration section for options
-    },
-    config = function(_, opts)
-      local chat = require("CopilotChat")
-      local select = require("CopilotChat.select")
+    "github/copilot.vim",
+    config = function()
+      -- Configure Copilot
+      vim.g.copilot_no_tab_map = true
+      vim.g.copilot_assume_mapped = true
       
-      -- Configure for Gemini API
-      chat.setup(vim.tbl_deep_extend("force", opts, {
-        debug = false, -- Enable debugging
-        
-        -- Model configuration for Gemini
-        model = "gpt-4", -- Default model, will be overridden
-        
-        -- Custom API configuration
-        api_key_cmd = "echo $GEMINI_API_KEY", -- You'll need to set this environment variable
-        
-        -- Chat window configuration - using a floating window instead of sidebar
-        window = {
-          layout = 'float', -- 'vertical', 'horizontal', 'float', 'replace'
-          width = 0.5,      -- fractional width of parent, or absolute width in columns when > 1
-          height = 0.5,     -- fractional height of parent, or absolute height in rows when > 1
-          -- Options below only apply to floating windows
-          relative = 'editor', -- 'editor', 'win', 'cursor', 'mouse'
-          border = 'single',   -- 'none', single', 'double', 'rounded', 'solid', 'shadow'
-          row = nil,           -- row position of the window, default is centered
-          col = nil,           -- column position of the window, default is centered
-          title = 'Copilot Chat', -- title of chat window
-          footer = nil,        -- footer of chat window
-          zindex = 1,          -- determines if window is on top or below other floating windows
-        },
-        
-        -- Chat configuration
-        question_header = '## User ', -- Header to use for user questions
-        answer_header = '## Copilot ', -- Header to use for AI answers
-        error_header = '## Error ', -- Header to use for errors
-        separator = '───', -- Separator to use in chat
-        
-        -- Default prompts
-        prompts = {
-          Explain = {
-            prompt = '/COPILOT_EXPLAIN Write an explanation for the active selection as paragraphs of text.',
-          },
-          Review = {
-            prompt = '/COPILOT_REVIEW Review the selected code.',
-            callback = function(response, source)
-              -- Handle response
-            end,
-          },
-          Fix = {
-            prompt = '/COPILOT_GENERATE There is a problem in this code. Rewrite the code to show it with the bug fixed.',
-          },
-          Optimize = {
-            prompt = '/COPILOT_GENERATE Optimize the selected code to improve performance and readablilty.',
-          },
-          Docs = {
-            prompt = '/COPILOT_GENERATE Please add documentation comment for the selection.',
-          },
-          Tests = {
-            prompt = '/COPILOT_GENERATE Please generate tests for my code.',
-          },
-          FixDiagnostic = {
-            prompt = 'Please assist with the following diagnostic issue in file:',
-            selection = select.diagnostics,
-          },
-          Commit = {
-            prompt = 'Write commit message for the change with commitizen convention. Make sure the title has maximum 50 characters and message is wrapped at 72 characters. Wrap the whole message in code block with language gitcommit.',
-            selection = select.gitdiff,
-          },
-          CommitStaged = {
-            prompt = 'Write commit message for the change with commitizen convention. Make sure the title has maximum 50 characters and message is wrapped at 72 characters. Wrap the whole message in code block with language gitcommit.',
-            selection = function(source)
-              return select.gitdiff(source, true)
-            end,
-          },
-        },
-      }))
+      -- Set up custom keymaps for copilot suggestions
+      vim.api.nvim_set_keymap("i", "<C-J>", 'copilot#Accept("<CR>")', { silent = true, expr = true })
+      vim.api.nvim_set_keymap("i", "<C-K>", 'copilot#Previous()', { silent = true, expr = true })
+      vim.api.nvim_set_keymap("i", "<C-L>", 'copilot#Next()', { silent = true, expr = true })
       
       -- Global variable to track AI autocomplete state
       vim.g.ai_autocomplete_enabled = true
       
-      -- Global variable to track current model
-      vim.g.current_ai_model = "gemini-pro"
+      -- Global variable to track current model (placeholder for UI)
+      vim.g.current_ai_model = "copilot"
+      
+      -- Function to create a simple chat buffer
+      local function create_chat_buffer()
+        -- Create a new buffer
+        local buf = vim.api.nvim_create_buf(false, true)
+        vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')
+        vim.api.nvim_buf_set_option(buf, 'buftype', 'nofile')
+        vim.api.nvim_buf_set_option(buf, 'swapfile', false)
+        
+        -- Create a horizontal split window
+        vim.cmd('split')
+        local win = vim.api.nvim_get_current_win()
+        vim.api.nvim_win_set_buf(win, buf)
+        vim.api.nvim_win_set_height(win, math.floor(vim.o.lines * 0.4))
+        
+        -- Set buffer name
+        vim.api.nvim_buf_set_name(buf, 'AI Chat')
+        
+        -- Add header
+        local header = {
+          "# AI Chat Window",
+          "",
+          "Ask questions about your code here.",
+          "Type your questions below and Copilot will help you.",
+          "",
+          "---",
+          "",
+        }
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, header)
+        
+        -- Move cursor to the end
+        vim.api.nvim_win_set_cursor(win, {#header + 1, 0})
+        
+        return buf, win
+      end
       
       -- Function to toggle AI autocomplete
       local function toggle_ai_autocomplete()
@@ -97,7 +59,7 @@ return {
         local status = vim.g.ai_autocomplete_enabled and "enabled" or "disabled"
         print("AI autocomplete " .. status)
         
-        -- You can extend this to actually disable/enable copilot suggestions
+        -- Toggle copilot suggestions
         if vim.g.ai_autocomplete_enabled then
           vim.cmd("Copilot enable")
         else
@@ -105,13 +67,12 @@ return {
         end
       end
       
-      -- Function to change AI model
+      -- Function to change AI model (placeholder UI)
       local function change_ai_model()
         local models = {
+          "copilot",
           "gemini-pro",
           "gpt-4",
-          "gpt-3.5-turbo",
-          "claude-3-opus",
           "claude-3-sonnet"
         }
         
@@ -124,59 +85,200 @@ return {
           if choice then
             vim.g.current_ai_model = choice
             print("AI model changed to: " .. choice)
-            -- Here you would typically reconfigure the chat with the new model
-            -- This would require custom implementation to switch the backend
+            if choice ~= "copilot" then
+              print("Note: Non-Copilot models require additional setup (API keys, etc.)")
+            end
           end
         end)
       end
       
+      -- Function to open chat with selected code
+      local function chat_with_selection()
+        -- Get visual selection
+        local start_pos = vim.fn.getpos("'<")
+        local end_pos = vim.fn.getpos("'>")
+        local lines = vim.fn.getline(start_pos[2], end_pos[2])
+        
+        if type(lines) == "string" then
+          lines = {lines}
+        end
+        
+        -- Handle partial line selections
+        if #lines > 0 then
+          if #lines == 1 then
+            lines[1] = string.sub(lines[1], start_pos[3], end_pos[3])
+          else
+            lines[1] = string.sub(lines[1], start_pos[3])
+            lines[#lines] = string.sub(lines[#lines], 1, end_pos[3])
+          end
+        end
+        
+        local selected_code = table.concat(lines, "\n")
+        
+        -- Create chat buffer if it doesn't exist
+        local buf_exists = false
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local buf_name = vim.api.nvim_buf_get_name(buf)
+          if buf_name:match("AI Chat") then
+            buf_exists = true
+            -- Switch to existing buffer
+            vim.cmd('sbuffer ' .. buf)
+            break
+          end
+        end
+        
+        if not buf_exists then
+          create_chat_buffer()
+        end
+        
+        -- Add the selected code to chat
+        local chat_lines = {
+          "",
+          "## Selected Code:",
+          "",
+          "```" .. vim.bo.filetype,
+          selected_code,
+          "```",
+          "",
+          "## Question:",
+          "",
+        }
+        
+        local current_lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+        vim.api.nvim_buf_set_lines(0, -1, -1, false, chat_lines)
+        
+        -- Position cursor at the end for user input
+        local new_line_count = #current_lines + #chat_lines
+        vim.api.nvim_win_set_cursor(0, {new_line_count, 0})
+        
+        -- Enter insert mode
+        vim.cmd('startinsert!')
+      end
+      
+      -- Function to open empty chat
+      local function open_chat()
+        create_chat_buffer()
+        vim.cmd('startinsert!')
+      end
+      
+      -- Function to close chat
+      local function close_chat()
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local buf_name = vim.api.nvim_buf_get_name(buf)
+          if buf_name:match("AI Chat") then
+            vim.api.nvim_buf_delete(buf, {force = true})
+            break
+          end
+        end
+      end
+      
+      -- Function to toggle chat
+      local function toggle_chat()
+        local chat_open = false
+        for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+          local buf_name = vim.api.nvim_buf_get_name(buf)
+          if buf_name:match("AI Chat") then
+            chat_open = true
+            break
+          end
+        end
+        
+        if chat_open then
+          close_chat()
+        else
+          open_chat()
+        end
+      end
+      
+      -- Auto-command to respect the global toggle
+      vim.api.nvim_create_autocmd("InsertEnter", {
+        pattern = "*",
+        callback = function()
+          if vim.g.ai_autocomplete_enabled then
+            vim.cmd("Copilot enable")
+          else
+            vim.cmd("Copilot disable")
+          end
+        end,
+      })
+      
       -- Key mappings
       -- Visual mode: select code and press 'ai' to start chat
-      vim.keymap.set('v', 'ai', function()
-        local input = vim.fn.input("Quick Chat: ")
-        if input ~= "" then
-          require("CopilotChat").ask(input, { selection = require("CopilotChat.select").visual })
-        end
-      end, { desc = "CopilotChat - Quick chat with visual selection" })
+      vim.keymap.set('v', 'ai', chat_with_selection, { desc = "AI Chat - Chat with visual selection" })
       
       -- Normal mode mappings
-      vim.keymap.set('n', '<leader>ai', function()
-        local input = vim.fn.input("Quick Chat: ")
-        if input ~= "" then
-          require("CopilotChat").ask(input)
-        end
-      end, { desc = "CopilotChat - Quick chat" })
-      
-      -- Open chat window
-      vim.keymap.set('n', '<leader>ao', '<cmd>CopilotChatOpen<cr>', { desc = "CopilotChat - Open chat window" })
-      
-      -- Close chat window
-      vim.keymap.set('n', '<leader>ac', '<cmd>CopilotChatClose<cr>', { desc = "CopilotChat - Close chat window" })
-      
-      -- Toggle chat window
-      vim.keymap.set('n', '<leader>at', '<cmd>CopilotChatToggle<cr>', { desc = "CopilotChat - Toggle chat window" })
+      vim.keymap.set('n', '<leader>ai', open_chat, { desc = "AI Chat - Open chat" })
+      vim.keymap.set('n', '<leader>ao', open_chat, { desc = "AI Chat - Open chat" })
+      vim.keymap.set('n', '<leader>ac', close_chat, { desc = "AI Chat - Close chat" })
+      vim.keymap.set('n', '<leader>at', toggle_chat, { desc = "AI Chat - Toggle chat" })
       
       -- Model selector
-      vim.keymap.set('n', '<leader>am', change_ai_model, { desc = "CopilotChat - Change AI model" })
+      vim.keymap.set('n', '<leader>am', change_ai_model, { desc = "AI Chat - Change AI model" })
       
       -- Toggle AI autocomplete
       vim.keymap.set('n', '<leader>aa', toggle_ai_autocomplete, { desc = "Toggle AI autocomplete" })
       
-      -- Predefined prompts
-      vim.keymap.set('n', '<leader>ae', '<cmd>CopilotChatExplain<cr>', { desc = "CopilotChat - Explain code" })
-      vim.keymap.set('n', '<leader>ar', '<cmd>CopilotChatReview<cr>', { desc = "CopilotChat - Review code" })
-      vim.keymap.set('n', '<leader>af', '<cmd>CopilotChatFix<cr>', { desc = "CopilotChat - Fix code" })
-      vim.keymap.set('n', '<leader>ap', '<cmd>CopilotChatOptimize<cr>', { desc = "CopilotChat - Optimize code" })
-      vim.keymap.set('n', '<leader>ad', '<cmd>CopilotChatDocs<cr>', { desc = "CopilotChat - Generate docs" })
-      vim.keymap.set('n', '<leader>as', '<cmd>CopilotChatTests<cr>', { desc = "CopilotChat - Generate tests" })
+      -- Predefined prompts that add text to chat
+      vim.keymap.set('n', '<leader>ae', function()
+        open_chat()
+        vim.api.nvim_put({"## Please explain this code:"}, "l", true, true)
+      end, { desc = "AI Chat - Explain code" })
+      
+      vim.keymap.set('n', '<leader>ar', function()
+        open_chat()
+        vim.api.nvim_put({"## Please review this code for potential issues:"}, "l", true, true)
+      end, { desc = "AI Chat - Review code" })
+      
+      vim.keymap.set('n', '<leader>af', function()
+        open_chat()
+        vim.api.nvim_put({"## Please fix any issues in this code:"}, "l", true, true)
+      end, { desc = "AI Chat - Fix code" })
+      
+      vim.keymap.set('n', '<leader>ap', function()
+        open_chat()
+        vim.api.nvim_put({"## Please optimize this code for better performance:"}, "l", true, true)
+      end, { desc = "AI Chat - Optimize code" })
+      
+      vim.keymap.set('n', '<leader>ad', function()
+        open_chat()
+        vim.api.nvim_put({"## Please generate documentation for this code:"}, "l", true, true)
+      end, { desc = "AI Chat - Generate docs" })
+      
+      vim.keymap.set('n', '<leader>as', function()
+        open_chat()
+        vim.api.nvim_put({"## Please generate tests for this code:"}, "l", true, true)
+      end, { desc = "AI Chat - Generate tests" })
       
       -- Visual mode prompts
-      vim.keymap.set('v', '<leader>ae', '<cmd>CopilotChatExplain<cr>', { desc = "CopilotChat - Explain selection" })
-      vim.keymap.set('v', '<leader>ar', '<cmd>CopilotChatReview<cr>', { desc = "CopilotChat - Review selection" })
-      vim.keymap.set('v', '<leader>af', '<cmd>CopilotChatFix<cr>', { desc = "CopilotChat - Fix selection" })
-      vim.keymap.set('v', '<leader>ap', '<cmd>CopilotChatOptimize<cr>', { desc = "CopilotChat - Optimize selection" })
-      vim.keymap.set('v', '<leader>ad', '<cmd>CopilotChatDocs<cr>', { desc = "CopilotChat - Document selection" })
-      vim.keymap.set('v', '<leader>as', '<cmd>CopilotChatTests<cr>', { desc = "CopilotChat - Generate tests for selection" })
+      vim.keymap.set('v', '<leader>ae', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please explain this code."}, "l", true, true)
+      end, { desc = "AI Chat - Explain selection" })
+      
+      vim.keymap.set('v', '<leader>ar', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please review this code for potential issues."}, "l", true, true)
+      end, { desc = "AI Chat - Review selection" })
+      
+      vim.keymap.set('v', '<leader>af', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please fix any issues in this code."}, "l", true, true)
+      end, { desc = "AI Chat - Fix selection" })
+      
+      vim.keymap.set('v', '<leader>ap', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please optimize this code for better performance."}, "l", true, true)
+      end, { desc = "AI Chat - Optimize selection" })
+      
+      vim.keymap.set('v', '<leader>ad', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please generate documentation for this code."}, "l", true, true)
+      end, { desc = "AI Chat - Document selection" })
+      
+      vim.keymap.set('v', '<leader>as', function()
+        chat_with_selection()
+        vim.api.nvim_put({"Please generate tests for this code."}, "l", true, true)
+      end, { desc = "AI Chat - Generate tests for selection" })
     end,
   }
 }
