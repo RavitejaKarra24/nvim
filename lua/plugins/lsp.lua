@@ -28,8 +28,11 @@ return {
         vim.keymap.set('n', '<leader>vd', vim.diagnostic.open_float, opts)
         -- Copy diagnostic to clipboard
         vim.keymap.set('n', '<leader>vc', function()
-            local diagnostic = vim.diagnostic.get_line(0)[1]
-            if diagnostic then
+            local bufnr = 0
+            local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
+            local diagnostics = vim.diagnostic.get(bufnr, { lnum = lnum })
+            local diagnostic = diagnostics and diagnostics[1] or nil
+            if diagnostic and diagnostic.message then
                 vim.fn.setreg('+', diagnostic.message)
                 print("Diagnostic copied to clipboard!")
             else
