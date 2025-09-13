@@ -72,3 +72,24 @@ vim.keymap.set("n", "<leader>vpl", "<cmd>e ~/.config/nvim/lua/plugins/<CR>");
 vim.keymap.set("n", "<leader><leader>", function()
     vim.cmd("source %")
 end)
+
+-- AI Chat Keymaps (defined in copilot-chat.lua plugin):
+-- Visual mode:
+--   'ai' - Quick chat with selected code
+-- Normal mode:
+--   '<leader>ai' - Quick chat
+--   '<leader>ao' - Open chat window
+--   '<leader>ac' - Close chat window
+--   '<leader>at' - Toggle chat window
+--   '<leader>am' - Change AI model
+--   '<leader>aa' - Toggle AI autocomplete
+--   '<leader>ae' - Explain code/selection
+--   '<leader>ar' - Review code/selection
+--   '<leader>af' - Fix code/selection
+--   '<leader>ap' - Optimize code/selection
+--   '<leader>ad' - Generate docs for code/selection
+--   '<leader>as' - Generate tests for code/selection
+-- Insert mode (Copilot):
+--   '<C-J>' - Accept suggestion
+--   '<C-K>' - Previous suggestion
+--   '<C-L>' - Next suggestion
