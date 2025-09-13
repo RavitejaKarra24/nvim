@@ -20,7 +20,7 @@ This Neovim configuration includes GitHub Copilot integration with a custom chat
 
 ### 2. Optional: Future AI Model Integration
 
-The interface includes placeholder support for additional AI models like Gemini. To enable these:
+The interface includes placeholder support for additional AI models including the latest versions like Gemini 2.5 Pro, Claude 4, and Grok 4, as well as thinking models like o1-preview and o1-mini. To enable these:
 1. Get API keys for your preferred AI service
 2. Set up environment variables as needed
 3. Extend the model switching functionality in the plugin configuration
@@ -79,9 +79,13 @@ The chat window is implemented as:
 Currently supports:
 - **GitHub Copilot** (fully functional)
 - **Future Models** (UI placeholder):
-  - gemini-pro
-  - gpt-4
-  - claude-3-sonnet
+  - gemini-2.5-pro
+  - claude-4
+  - grok-4
+  - gpt-4o
+  - o1-preview (thinking model)
+  - o1-mini (thinking model)
+  - claude-3.5-sonnet
 
 ## Workflow Example
 
