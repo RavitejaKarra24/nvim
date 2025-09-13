@@ -71,9 +71,13 @@ return {
       local function change_ai_model()
         local models = {
           "copilot",
-          "gemini-pro",
-          "gpt-4",
-          "claude-3-sonnet"
+          "gemini-2.5-pro",
+          "claude-4",
+          "grok-4",
+          "gpt-4o",
+          "o1-preview",
+          "o1-mini",
+          "claude-3.5-sonnet"
         }
         
         vim.ui.select(models, {
