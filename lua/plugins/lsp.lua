@@ -9,6 +9,8 @@ return {
       'L3MON4D3/LuaSnip',
     },
     config = function()
+      vim.g.ai_mode_enabled = vim.g.ai_mode_enabled or false
+
       -- Keymaps and LSP on_attach
       local function on_attach(client, bufnr)
         local opts = {buffer = bufnr}
@@ -144,6 +146,9 @@ return {
 
       -- Setup completion
       cmp.setup({
+        enabled = function()
+          return not vim.g.ai_mode_enabled
+        end,
         mapping = cmp.mapping.preset.insert({
           ['<C-p>'] = cmp.mapping.select_prev_item(),
           ['<C-n>'] = cmp.mapping.select_next_item(),
