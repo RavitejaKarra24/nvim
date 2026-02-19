@@ -3,8 +3,6 @@ return {
   event = { "BufWritePre" },
   cmd = { "ConformInfo" },
   config = function()
-    vim.g.ai_mode_enabled = vim.g.ai_mode_enabled or false
-
     local ok, conform = pcall(require, "conform")
     if not ok then
       vim.notify("conform.nvim failed to load", vim.log.levels.ERROR)
@@ -43,10 +41,6 @@ return {
         },
       },
       format_on_save = function(bufnr)
-        if vim.g.ai_mode_enabled then
-          return false
-        end
-
         local max_size = 1024 * 1024 -- 1MB safeguard
         local name = vim.api.nvim_buf_get_name(bufnr)
         if name == "" then
@@ -81,4 +75,3 @@ return {
     end, { desc = "Format with Prettier" })
   end,
 }
-
